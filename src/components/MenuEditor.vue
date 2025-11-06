@@ -1,129 +1,138 @@
 <template>
-  <div>
-    <h3>Modifica menù</h3>
-    <div class="row">
-      <div>
-        <label>Seleziona voce</label>
-        <select v-model="selected" @change="load">
-          <option v-for="n in recipes.names" :key="n" :value="n">{{ n }}</option>
-        </select>
-      </div>
-      <div class="new-entry">
-        <label>&nbsp;</label>
-        <button class="btn ok lm-btn-nuovo" type="button" @click="openNewEntryForm">Nuova voce</button>
-      </div>
-    </div>
+  <div class="menu-editor-backdrop" @click.self="$emit('close')">
+    <div class="menu-editor-panel" @click.stop>
+      <button
+        class="menu-editor-close"
+        type="button"
+        aria-label="Chiudi"
+        @click="$emit('close')"
+      >
+        ✕
+      </button>
 
-    <div class="row" style="margin-top:8px;">
-      <div>
-        <label>Nome voce</label>
-        <input v-model="name" type="text" placeholder="Es. BlackBurger" />
-      </div>
-      <div>
-        <label>Categoria</label>
-        <select v-model="category" required>
-          <option v-for="c in cats" :key="c" :value="c">{{ c }}</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="row" style="margin-top:8px;">
-      <div>
-        <label>Azioni</label>
-        <div class="row">
-          <button class="btn ok" type="button" @click="save">Salva modifiche</button>
-          <button class="btn" type="button" @click="remove">Elimina voce</button>
-          <button class="btn" type="button" @click="$emit('close')">Chiudi</button>
-        </div>
-      </div>
-      <div class="spacer"></div>
-    </div>
-
-    <div class="card" style="margin-top:10px;">
-      <div class="title" style="margin:0 0 8px;">Ingredienti / materie prime</div>
-      <div>
-        <div
-          class="row"
-          v-for="(it, idx) in items"
-          :key="idx"
-          style="margin-bottom:6px;"
-        >
-          <input v-model="it.name" type="text" placeholder="Ingrediente" />
-          <input v-model.number="it.qty" type="number" step="0.01" min="0" />
-          <input v-model="it.unit" type="text" placeholder="Unità (pz, fet., porz.)" />
-          <button class="btn" type="button" @click="items.splice(idx, 1)">✕</button>
-        </div>
-
-        <div class="row" style="margin-top:8px;">
-          <input
-            v-model="newName"
-            type="text"
-            placeholder="Ingrediente (es. Hamburger 200g)"
-          />
-          <input
-            v-model.number="newQty"
-            type="number"
-            step="0.01"
-            min="0"
-          />
-          <input
-            v-model="newUnit"
-            type="text"
-            placeholder="Unità (pz, fet., porz.)"
-          />
-          <button class="btn" type="button" @click="addIng">Aggiungi ingrediente</button>
-        </div>
-      </div>
-    </div>
-
-    <div style="margin-top:16px;">
-      <h4 style="margin:0 0 8px;">Voci del menù per categoria</h4>
-      <div class="k">
-        <div class="card">
-          <div class="title" style="margin:0 0 8px;">Appetizer</div>
-          <div>
-            <button
-              v-for="n in recipes.byCategory.Appetizer"
-              :key="n"
-              class="btn"
-              type="button"
-              style="margin:4px 6px 0 0;"
-              @click="edit(n)"
-            >
-              ✏️ {{ n }}
-            </button>
+      <h3>Modifica menù</h3>
+      <div class="menu-editor-layout">
+        <div class="menu-editor-main">
+          <div class="row">
+            <div>
+              <label>Seleziona voce</label>
+              <select v-model="selected" @change="load">
+                <option v-for="n in recipes.names" :key="n" :value="n">{{ n }}</option>
+              </select>
+            </div>
+            <div class="new-entry">
+              <label>&nbsp;</label>
+              <button class="btn ok" type="button" @click="openNewEntryForm">Nuova voce</button>
+            </div>
           </div>
-        </div>
 
-        <div class="card">
-          <div class="title" style="margin:0 0 8px;">Burgers</div>
-          <div>
-            <button
-              v-for="n in recipes.byCategory.Burgers"
-              :key="n"
-              class="btn"
-              type="button"
-              style="margin:4px 6px 0 0;"
-              @click="edit(n)"
-            >
-              ✏️ {{ n }}
-            </button>
+          <div class="row" style="margin-top:8px;">
+            <div>
+              <label>Nome voce</label>
+              <input v-model="name" type="text" placeholder="Es. BlackBurger" />
+            </div>
+            <div>
+              <label>Categoria</label>
+              <select v-model="category" required>
+                <option v-for="c in cats" :key="c" :value="c">{{ c }}</option>
+              </select>
+            </div>
           </div>
-        </div>
 
-        <div class="card">
-          <div class="title" style="margin:0 0 8px;">Dolci</div>
-          <div>
-            <button
-              v-for="n in recipes.byCategory.Dolci"
-              :key="n"
-              class="btn"
-              type="button"
-              style="margin:4px 6px 0 0;"
-              @click="edit(n)"
-            >
-              ✏️ {{ n }}
-            </button>
+          <div class="row" style="margin-top:8px;">
+            <div>
+              <label>Azioni</label>
+              <div class="row">
+                <button class="btn ok" type="button" @click="save">Salva Modifiche</button>
+                <button class="btn" type="button" @click="remove">Elimina voce</button>
+              </div>
+            </div>
+            <div class="spacer"></div>
+          </div>
+
+          <div class="card" style="margin-top:10px;">
+            <div class="title" style="margin:0 0 8px;">Ingredienti / materie prime</div>
+            <div>
+              <div
+                class="row"
+                v-for="(it, idx) in items"
+                :key="idx"
+                style="margin-bottom:6px;"
+              >
+                <input v-model="it.name" type="text" placeholder="Ingrediente" />
+                <input v-model.number="it.qty" type="number" step="0.01" min="0" />
+                <input v-model="it.unit" type="text" placeholder="Unità (pz, fet., porz.)" />
+                <button class="btn" type="button" @click="items.splice(idx, 1)">✕</button>
+              </div>
+
+              <div class="row" style="margin-top:8px;">
+                <input
+                  v-model="newName"
+                  type="text"
+                  placeholder="Ingrediente (es. Hamburger 200g)"
+                />
+                <input v-model.number="newQty" type="number" step="0.01" min="0" />
+                <input
+                  v-model="newUnit"
+                  type="text"
+                  placeholder="Unità (pz, fet., porz.)"
+                />
+                <button class="btn" type="button" @click="addIng">Aggiungi ingrediente</button>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:16px;">
+            <h4 style="margin:0 0 8px;">Voci del menù per categoria</h4>
+            <div class="k">
+              <div class="card">
+                <div class="title" style="margin:0 0 8px;">Appetizer</div>
+                <div>
+                  <button
+                    v-for="n in recipes.byCategory.Appetizer"
+                    :key="n"
+                    class="btn"
+                    type="button"
+                    style="margin:4px 6px 0 0;"
+                    @click="edit(n)"
+                  >
+                    ✏️ {{ n }}
+                  </button>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="title" style="margin:0 0 8px;">Burgers</div>
+                <div>
+                  <button
+                    v-for="n in recipes.byCategory.Burgers"
+                    :key="n"
+                    class="btn"
+                    type="button"
+                    style="margin:4px 6px 0 0;"
+                    @click="edit(n)"
+                  >
+                    ✏️ {{ n }}
+                  </button>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="title" style="margin:0 0 8px;">Dolci</div>
+                <div>
+                  <button
+                    v-for="n in recipes.byCategory.Dolci"
+                    :key="n"
+                    class="btn"
+                    type="button"
+                    style="margin:4px 6px 0 0;"
+                    @click="edit(n)"
+                  >
+                    ✏️ {{ n }}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -339,6 +348,62 @@ watch(
   width: 100%;
   height: 61%;
 }
+.menu-editor-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 900;
+}
+.menu-editor-panel {
+  position: relative;
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px 24px 24px;
+  width: min(960px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+}
+.menu-editor-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.menu-editor-main {
+  flex: 1;
+}
+@media (min-width: 1024px) {
+  .menu-editor-layout {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+  .menu-editor-main {
+    flex: 3;
+  }
+}
+.menu-editor-close {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.05);
+  font-size: 20px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.menu-editor-close:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -367,5 +432,4 @@ watch(
   justify-content: flex-end;
   margin-top: 16px;
 }
-
 </style>
