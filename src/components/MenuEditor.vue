@@ -8,27 +8,35 @@
           <option v-for="n in recipes.names" :key="n" :value="n">{{ n }}</option>
         </select>
       </div>
-      <div>
-        <label>Nuova voce (per aggiungere)</label>
-        <input v-model="name" type="text" placeholder="Es. BlackBurger" />
+      <div class="new-entry">
+        <label>&nbsp;</label>
+        <button class="btn ok lm-btn-nuovo" type="button" @click="openNewEntryForm">Nuova voce</button>
       </div>
     </div>
 
     <div class="row" style="margin-top:8px;">
+      <div>
+        <label>Nome voce</label>
+        <input v-model="name" type="text" placeholder="Es. BlackBurger" />
+      </div>
       <div>
         <label>Categoria</label>
         <select v-model="category" required>
           <option v-for="c in cats" :key="c" :value="c">{{ c }}</option>
         </select>
       </div>
+    </div>
+
+    <div class="row" style="margin-top:8px;">
       <div>
         <label>Azioni</label>
         <div class="row">
-          <button class="btn ok" type="button" @click="save">Salva / Aggiungi</button>
+          <button class="btn ok" type="button" @click="save">Salva modifiche</button>
           <button class="btn" type="button" @click="remove">Elimina voce</button>
           <button class="btn" type="button" @click="$emit('close')">Chiudi</button>
         </div>
       </div>
+      <div class="spacer"></div>
     </div>
 
     <div class="card" style="margin-top:10px;">
@@ -121,6 +129,57 @@
       </div>
     </div>
   </div>
+
+  <div v-if="showNewForm" class="modal-backdrop">
+    <form class="modal" @submit.prevent="saveNewEntry">
+      <h4>Nuova voce</h4>
+      <div class="row">
+        <div>
+          <label>Nome voce</label>
+          <input v-model="newEntryName" type="text" placeholder="Es. BlackBurger" />
+        </div>
+        <div>
+          <label>Categoria</label>
+          <select v-model="newEntryCategory" required>
+            <option v-for="c in cats" :key="c" :value="c">{{ c }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px;">
+        <div class="title" style="margin:0 0 8px;">Ingredienti</div>
+        <div>
+          <div
+            class="row"
+            v-for="(it, idx) in newEntryItems"
+            :key="idx"
+            style="margin-bottom:6px;"
+          >
+            <input v-model="it.name" type="text" placeholder="Ingrediente" />
+            <input v-model.number="it.qty" type="number" step="0.01" min="0" />
+            <input v-model="it.unit" type="text" placeholder="Unità (pz, fet., porz.)" />
+            <button class="btn" type="button" @click="newEntryItems.splice(idx, 1)">✕</button>
+          </div>
+
+          <div class="row" style="margin-top:8px;">
+            <input
+              v-model="newEntryIngName"
+              type="text"
+              placeholder="Ingrediente (es. Hamburger 200g)"
+            />
+            <input v-model.number="newEntryIngQty" type="number" step="0.01" min="0" />
+            <input v-model="newEntryIngUnit" type="text" placeholder="Unità (pz, fet., porz.)" />
+            <button class="btn" type="button" @click="addNewEntryIng">Aggiungi ingrediente</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn ok" type="submit">Salva</button>
+        <button class="btn" type="button" @click="closeNewEntryForm">Annulla</button>
+      </div>
+    </form>
+  </div>
 </template>
 
 <script setup>
@@ -137,6 +196,14 @@ const newName = ref('')
 const newQty = ref(1)
 const newUnit = ref('')
 const cats = CATEGORIES
+
+const showNewForm = ref(false)
+const newEntryName = ref('')
+const newEntryCategory = ref(cats[0] || 'Appetizer')
+const newEntryItems = ref([])
+const newEntryIngName = ref('')
+const newEntryIngQty = ref(1)
+const newEntryIngUnit = ref('')
 
 function load() {
   const r = recipes.recipes[selected.value] || { category: 'Appetizer', items: [] }
@@ -160,6 +227,47 @@ function addIng() {
   newName.value = ''
   newQty.value = 1
   newUnit.value = ''
+}
+
+function openNewEntryForm() {
+  newEntryName.value = ''
+  newEntryCategory.value = cats[0] || 'Appetizer'
+  newEntryItems.value = []
+  newEntryIngName.value = ''
+  newEntryIngQty.value = 1
+  newEntryIngUnit.value = ''
+  showNewForm.value = true
+}
+
+function closeNewEntryForm() {
+  showNewForm.value = false
+}
+
+function addNewEntryIng() {
+  if (!newEntryIngName.value.trim()) return
+  newEntryItems.value.push({
+    name: newEntryIngName.value.trim(),
+    qty: Number(newEntryIngQty.value || 0),
+    unit: newEntryIngUnit.value.trim()
+  })
+  newEntryIngName.value = ''
+  newEntryIngQty.value = 1
+  newEntryIngUnit.value = ''
+}
+
+async function saveNewEntry() {
+  const n = (newEntryName.value || '').trim()
+  if (!n) return alert('Nome obbligatorio')
+  const payload = {
+    category: newEntryCategory.value,
+    items: newEntryItems.value.filter((x) => x.name)
+  }
+  recipes.upsertRecipe(n, payload)
+  if (recipes.unsub) await recipes.persistCloud()
+  selected.value = n
+  showNewForm.value = false
+  load()
+  alert('Voce aggiunta!')
 }
 
 async function save() {
@@ -227,4 +335,37 @@ watch(
 .row > * {
   flex: 1;
 }
+.new-entry button {
+  width: 100%;
+  height: 61%;
+}
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 1000;
+}
+.modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  width: min(640px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+}
+.modal h4 {
+  margin-top: 0;
+}
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
 </style>
